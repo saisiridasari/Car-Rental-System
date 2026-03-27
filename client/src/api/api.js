@@ -1,17 +1,21 @@
+// Create a reusable Axios instance for making API requests in a frontend application.
+// Set the base URL to the backend API endpoint so all requests are prefixed automatically.
+// Add a request interceptor that retrieves a JWT token from localStorage before each request.
 import axios from "axios";
 
-const api = axios.create({
+const API = axios.create({
   baseURL: "http://localhost:5000/api"
 });
 
-api.interceptors.request.use((config) => {
+// ✅ Attach token dynamically
+API.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
 
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    req.headers.Authorization = `Bearer ${token}`;
   }
 
-  return config;
+  return req;
 });
 
-export default api;
+export default API;

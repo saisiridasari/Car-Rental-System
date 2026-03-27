@@ -1,3 +1,8 @@
+// Create booking controller functions to handle booking operations.
+// Validate request data and check car and driver availability before booking.
+// Calculate distance and total price using utility functions.
+// Save booking and update car and driver availability.
+// Provide APIs to fetch user bookings and all bookings for admin.
 const Booking = require("../models/Booking");
 const Car = require("../models/Car");
 const Driver = require("../models/Driver");

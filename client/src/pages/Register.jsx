@@ -1,3 +1,6 @@
+// Create a simple registration page with name, email, and password fields.
+// Send register request to API and store token and user in localStorage.
+// Redirect user to dashboard after successful registration.
 import { useState } from "react";
 import axios from "../api/api";
 import { useNavigate, Link } from "react-router-dom";
@@ -75,7 +78,7 @@ const Register = () => {
     </div>
   );
 };
-
+// Show basic form UI with a link to login page.
 const styles = {
   container: {
     height: "100vh",

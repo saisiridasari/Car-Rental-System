@@ -3,6 +3,7 @@ const router = express.Router();
 
 const {
   getCars,
+  getCarById,   
   addCar,
   updateCar,
   deleteCar
@@ -10,12 +11,12 @@ const {
 
 const { protect, adminOnly } = require("../middleware/authMiddleware");
 
-// Public
 router.get("/", getCars);
+router.get("/:id", getCarById); 
 
-// Admin
 router.post("/", protect, adminOnly, addCar);
 router.put("/:id", protect, adminOnly, updateCar);
 router.delete("/:id", protect, adminOnly, deleteCar);
+
 
 module.exports = router;

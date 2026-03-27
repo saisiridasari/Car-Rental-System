@@ -1,3 +1,4 @@
+#Act as a DevOps engineer. Create a GitHub Actions CI pipeline for a full-stack project with server (Node.js) and client (React). The pipeline should trigger on push and pull requests to the main branch, run on Ubuntu, and use Node.js 20. It should check out the code, verify the Node version, install dependencies in both server and client folders, and build the client using npm run build. Generate a clean and complete .github/workflows/ci.yml file.
 name: CI Pipeline
 
 on:
@@ -12,27 +13,27 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # ✅ FORCE NODE 20
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      # 🔥 FIX: Use Node 20
+      - name: Setup Node
+        uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: 20
 
-      - name: Check Node version
-        run: node -v
-
-      # ================= SERVER =================
+      # SERVER
       - name: Install server dependencies
-        working-directory: ./server
-        run: npm install
+        run: |
+          cd server
+          npm install
 
-      # ================= CLIENT =================
+      # CLIENT
       - name: Install client dependencies
-        working-directory: ./client
-        run: npm install
+        run: |
+          cd client
+          npm install
 
       - name: Build client
-        working-directory: ./client
-        run: npm run build
+        run: |
+          cd client
+          npm run build

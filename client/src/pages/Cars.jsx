@@ -1,3 +1,7 @@
+// Create a cars listing page that fetches car data from the API on load.
+// Add a search input to filter cars by name.
+// Group cars by category (economy, sedan, suv, luxury) for better display.
+// Show loading and empty states when needed.
 import { useEffect, useState } from "react";
 import axios from "../api/api";
 import CarCard from "../components/CarCard";
@@ -5,6 +9,7 @@ import CarCard from "../components/CarCard";
 const Cars = () => {
   const [cars, setCars] = useState([]);
   const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,13 +28,17 @@ const Cars = () => {
     fetchCars();
   }, []);
 
-  // ✅ FILTER
+  // FILTER
   const filteredCars = cars.filter((car) => {
     const name = car?.name || "";
-    return name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory =
+      activeCategory === "all" || car?.category === activeCategory;
+
+    return matchesSearch && matchesCategory;
   });
 
-  // ✅ GROUP BY CATEGORY
+  // GROUP
   const groupedCars = {
     economy: [],
     sedan: [],
@@ -38,7 +47,7 @@ const Cars = () => {
   };
 
   filteredCars.forEach((car) => {
-    const category = car?.category || "economy"; // fallback
+    const category = car?.category || "economy";
     if (groupedCars[category]) {
       groupedCars[category].push(car);
     }
@@ -47,15 +56,15 @@ const Cars = () => {
   return (
     <div style={styles.container}>
       
-      {/* Header */}
+      {/* HEADER */}
       <div style={styles.header}>
-        <h1 style={styles.title}>Find Your Perfect Ride</h1>
+        <h1 style={styles.title}>Explore Cars</h1>
         <p style={styles.subtitle}>
-          Choose from a wide range of cars with flexible pricing
+          Find the perfect ride for your journey
         </p>
       </div>
 
-      {/* Search */}
+      {/* SEARCH */}
       <div style={styles.searchBox}>
         <input
           type="text"
@@ -66,35 +75,48 @@ const Cars = () => {
         />
       </div>
 
-      {/* Content */}
+      {/* CATEGORY FILTER */}
+      <div style={styles.filterBar}>
+        {["all", "economy", "sedan", "suv", "luxury"].map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            style={{
+              ...styles.filterBtn,
+              background: activeCategory === cat ? "#000" : "#fff",
+              color: activeCategory === cat ? "#fff" : "#000"
+            }}
+          >
+            {cat.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* CONTENT */}
       {loading ? (
         <p style={styles.center}>Loading cars...</p>
       ) : filteredCars.length === 0 ? (
         <p style={styles.center}>No cars found</p>
       ) : (
-        <>
-          {Object.keys(groupedCars).map((category) => {
-            if (groupedCars[category].length === 0) return null;
+        Object.keys(groupedCars).map((category) => {
+          if (groupedCars[category].length === 0) return null;
 
-            return (
-              <div key={category}>
-                
-                {/* Category Title */}
-                <h2 style={styles.categoryTitle}>
-                  {category.toUpperCase()}
-                </h2>
+          return (
+            <div key={category}>
+              
+              <h2 style={styles.categoryTitle}>
+                {category.toUpperCase()}
+              </h2>
 
-                {/* Cars Grid */}
-                <div style={styles.grid}>
-                  {groupedCars[category].map((car) => (
-                    <CarCard key={car._id} car={car} />
-                  ))}
-                </div>
-
+              <div style={styles.grid}>
+                {groupedCars[category].map((car) => (
+                  <CarCard key={car._id} car={car} />
+                ))}
               </div>
-            );
-          })}
-        </>
+
+            </div>
+          );
+        })
       )}
     </div>
   );
@@ -110,36 +132,50 @@ const styles = {
 
   header: {
     textAlign: "center",
-    marginBottom: "30px"
+    marginBottom: "20px"
   },
 
   title: {
-    fontSize: "32px",
-    marginBottom: "10px"
+    fontSize: "34px",
+    marginBottom: "8px"
   },
 
   subtitle: {
     color: "#666",
-    fontSize: "16px"
+    fontSize: "15px"
   },
 
   searchBox: {
     display: "flex",
     justifyContent: "center",
-    marginBottom: "30px"
+    marginBottom: "20px"
   },
 
   searchInput: {
-    width: "300px",
+    width: "320px",
     padding: "12px",
     borderRadius: "8px",
-    border: "1px solid #ccc",
-    fontSize: "14px"
+    border: "1px solid #ddd"
+  },
+
+  filterBar: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "10px",
+    marginBottom: "30px"
+  },
+
+  filterBtn: {
+    padding: "8px 16px",
+    borderRadius: "20px",
+    border: "1px solid #000",
+    cursor: "pointer",
+    fontSize: "13px"
   },
 
   categoryTitle: {
-    margin: "30px 0 15px 0",
-    fontSize: "22px"
+    margin: "30px 0 15px",
+    fontSize: "20px"
   },
 
   grid: {

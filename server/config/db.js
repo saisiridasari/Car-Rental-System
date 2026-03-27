@@ -1,3 +1,5 @@
+// Create a function to connect to MongoDB using Mongoose.
+// Use the connection string from environment variables.
 const mongoose = require("mongoose");
 
 const connectDB = async () => {

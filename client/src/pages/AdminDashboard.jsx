@@ -1,3 +1,6 @@
+// Create a simple admin dashboard component with tabs for cars, drivers, and bookings.
+// Fetch all data (cars, drivers, bookings) from the API on load and store in state.
+// Allow adding and deleting cars and drivers with basic form validation.
 import { useEffect, useState } from "react";
 import axios from "../api/api";
 
@@ -8,7 +11,7 @@ const AdminDashboard = () => {
   const [drivers, setDrivers] = useState([]);
   const [bookings, setBookings] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   const [carForm, setCarForm] = useState({
     name: "",
@@ -23,56 +26,47 @@ const AdminDashboard = () => {
     licenseNumber: ""
   });
 
-  // ================= FETCH =================
+  /* ================= FETCH ================= */
+
   const fetchData = async () => {
-    setLoading(true);
-
     try {
-      const carsRes = await axios.get("/cars");
-      setCars(carsRes.data || []);
-    } catch (err) {
-      console.error(err);
-      setCars([]);
-    }
+      const [c, d, b] = await Promise.all([
+        axios.get("/cars"),
+        axios.get("/drivers"),
+        axios.get("/bookings")
+      ]);
 
-    try {
-      const driversRes = await axios.get("/drivers");
-      setDrivers(driversRes.data || []);
+      setCars(c.data || []);
+      setDrivers(d.data || []);
+      setBookings(b.data || []);
     } catch (err) {
-      console.error(err);
-      setDrivers([]);
+      console.error("Fetch Error:", err.response?.data || err.message);
+      alert("Failed to load data");
     }
-
-    try {
-      const bookingsRes = await axios.get("/bookings");
-      setBookings(bookingsRes.data || []);
-    } catch (err) {
-      console.error(err);
-      setBookings([]);
-    }
-
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  // ================= ADD CAR =================
+  /* ================= ADD ================= */
+
   const handleAddCar = async () => {
-    const { name, pricePerKm, baseRent, category } = carForm;
-
-    if (!name || !pricePerKm || !baseRent || !category) {
-      return alert("Fill all fields");
-    }
-
     try {
+      const { name, pricePerKm, baseRent, category } = carForm;
+
+      if (!name || !pricePerKm || !baseRent || !category) {
+        return alert("Fill all fields");
+      }
+
       await axios.post("/cars", {
         name,
         pricePerKm: Number(pricePerKm),
         baseRent: Number(baseRent),
         category
       });
+
+      alert("Car added successfully");
 
       setCarForm({
         name: "",
@@ -83,36 +77,22 @@ const AdminDashboard = () => {
 
       fetchData();
     } catch (err) {
-      alert("Failed to add car");
+      console.error(err.response?.data);
+      alert(err.response?.data?.error || "Failed to add car");
     }
   };
 
-  // ================= DELETE CAR =================
-  const handleDeleteCar = async (id) => {
-    if (!window.confirm("Delete this car?")) return;
-
-    try {
-      await axios.delete(`/cars/${id}`);
-      fetchData();
-    } catch (err) {
-      alert("Failed to delete car");
-    }
-  };
-
-  // ================= ADD DRIVER =================
   const handleAddDriver = async () => {
-    const { name, phone, licenseNumber } = driverForm;
-
-    if (!name || !phone || !licenseNumber) {
-      return alert("Fill all fields");
-    }
-
     try {
-      await axios.post("/drivers", {
-        name,
-        phone,
-        licenseNumber
-      });
+      const { name, phone, licenseNumber } = driverForm;
+
+      if (!name || !phone || !licenseNumber) {
+        return alert("Fill all fields");
+      }
+
+      await axios.post("/drivers", driverForm);
+
+      alert("Driver added successfully");
 
       setDriverForm({
         name: "",
@@ -122,38 +102,76 @@ const AdminDashboard = () => {
 
       fetchData();
     } catch (err) {
-      alert("Failed to add driver");
+      console.error(err.response?.data);
+      alert(err.response?.data?.error || "Failed to add driver");
     }
   };
 
-  // ================= DELETE DRIVER =================
-  const handleDeleteDriver = async (id) => {
-    if (!window.confirm("Delete this driver?")) return;
+  /* ================= DELETE ================= */
 
+  const handleDeleteCar = async (id) => {
     try {
+      if (!window.confirm("Delete car?")) return;
+
+      await axios.delete(`/cars/${id}`);
+      fetchData();
+    } catch (err) {
+      alert("Delete failed");
+    }
+  };
+
+  const handleDeleteDriver = async (id) => {
+    try {
+      if (!window.confirm("Delete driver?")) return;
+
       await axios.delete(`/drivers/${id}`);
       fetchData();
     } catch (err) {
-      alert("Failed to delete driver");
+      alert("Delete failed");
     }
   };
+
+  /* ================= FILTER ================= */
+
+  const filteredCars = cars.filter((c) =>
+    (c?.name || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredDrivers = drivers.filter((d) =>
+    (d?.name || "").toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div style={styles.container}>
       
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <div style={styles.sidebar}>
         <h2>Admin</h2>
 
-        <button onClick={() => setActiveTab("cars")}>Cars</button>
-        <button onClick={() => setActiveTab("drivers")}>Drivers</button>
-        <button onClick={() => setActiveTab("bookings")}>Bookings</button>
+        {["cars", "drivers", "bookings"].map((tab) => (
+          <button
+            key={tab}
+            style={{
+              ...styles.tab,
+              ...(activeTab === tab ? styles.activeTab : {})
+            }}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab.toUpperCase()}
+          </button>
+        ))}
       </div>
 
-      {/* Content */}
+      {/* CONTENT */}
       <div style={styles.content}>
-        
-        {loading && <p>Loading...</p>}
+
+        {/* SEARCH */}
+        <input
+          placeholder="Search..."
+          style={styles.search}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
         {/* ================= CARS ================= */}
         {activeTab === "cars" && (
@@ -162,6 +180,7 @@ const AdminDashboard = () => {
 
             <div style={styles.form}>
               <input
+                style={styles.input}
                 placeholder="Name"
                 value={carForm.name}
                 onChange={(e) =>
@@ -170,6 +189,7 @@ const AdminDashboard = () => {
               />
 
               <input
+                style={styles.input}
                 placeholder="Price/km"
                 value={carForm.pricePerKm}
                 onChange={(e) =>
@@ -178,6 +198,7 @@ const AdminDashboard = () => {
               />
 
               <input
+                style={styles.input}
                 placeholder="Base Rent"
                 value={carForm.baseRent}
                 onChange={(e) =>
@@ -186,6 +207,7 @@ const AdminDashboard = () => {
               />
 
               <select
+                style={styles.input}
                 value={carForm.category}
                 onChange={(e) =>
                   setCarForm({ ...carForm, category: e.target.value })
@@ -198,23 +220,21 @@ const AdminDashboard = () => {
                 <option value="luxury">Luxury</option>
               </select>
 
-              <button onClick={handleAddCar}>Add</button>
+              <button style={styles.addBtn} onClick={handleAddCar}>
+                Add Car
+              </button>
             </div>
 
-            {cars.map((c) => (
+            {filteredCars.map((c) => (
               <div key={c._id} style={styles.card}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>
-                    {c.name} ({c.category}) - ₹{c.pricePerKm}/km
-                  </span>
+                {c.name} ({c.category}) - ₹{c.pricePerKm}/km
 
-                  <button
-                    style={styles.deleteBtn}
-                    onClick={() => handleDeleteCar(c._id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+                <button
+                  style={styles.deleteBtn}
+                  onClick={() => handleDeleteCar(c._id)}
+                >
+                  Delete
+                </button>
               </div>
             ))}
           </>
@@ -227,6 +247,7 @@ const AdminDashboard = () => {
 
             <div style={styles.form}>
               <input
+                style={styles.input}
                 placeholder="Name"
                 value={driverForm.name}
                 onChange={(e) =>
@@ -235,6 +256,7 @@ const AdminDashboard = () => {
               />
 
               <input
+                style={styles.input}
                 placeholder="Phone"
                 value={driverForm.phone}
                 onChange={(e) =>
@@ -243,6 +265,7 @@ const AdminDashboard = () => {
               />
 
               <input
+                style={styles.input}
                 placeholder="License"
                 value={driverForm.licenseNumber}
                 onChange={(e) =>
@@ -253,23 +276,21 @@ const AdminDashboard = () => {
                 }
               />
 
-              <button onClick={handleAddDriver}>Add</button>
+              <button style={styles.addBtn} onClick={handleAddDriver}>
+                Add Driver
+              </button>
             </div>
 
-            {drivers.map((d) => (
+            {filteredDrivers.map((d) => (
               <div key={d._id} style={styles.card}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>
-                    {d.name} - {d.phone}
-                  </span>
+                {d.name} - {d.phone}
 
-                  <button
-                    style={styles.deleteBtn}
-                    onClick={() => handleDeleteDriver(d._id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+                <button
+                  style={styles.deleteBtn}
+                  onClick={() => handleDeleteDriver(d._id)}
+                >
+                  Delete
+                </button>
               </div>
             ))}
           </>
@@ -293,12 +314,13 @@ const AdminDashboard = () => {
   );
 };
 
+/* ================= STYLES ================= */
+
 const styles = {
   container: {
     display: "flex",
     minHeight: "100vh"
   },
-
   sidebar: {
     width: "200px",
     background: "#000",
@@ -308,33 +330,61 @@ const styles = {
     flexDirection: "column",
     gap: "10px"
   },
-
+  tab: {
+    padding: "10px",
+    background: "transparent",
+    color: "#fff",
+    border: "1px solid #333",
+    borderRadius: "6px",
+    cursor: "pointer"
+  },
+  activeTab: {
+    background: "#fff",
+    color: "#000"
+  },
   content: {
     flex: 1,
-    padding: "40px",
+    padding: "30px",
     background: "#f5f5f5"
   },
-
   form: {
     display: "flex",
     gap: "10px",
-    marginBottom: "20px"
+    marginBottom: "20px",
+    flexWrap: "wrap"
   },
-
+  input: {
+    padding: "10px",
+    borderRadius: "6px",
+    border: "1px solid #ccc"
+  },
+  addBtn: {
+    background: "#000",
+    color: "#fff",
+    padding: "10px",
+    borderRadius: "6px",
+    border: "none"
+  },
   card: {
     background: "#fff",
     padding: "10px",
     marginBottom: "10px",
-    borderRadius: "6px"
+    borderRadius: "6px",
+    display: "flex",
+    justifyContent: "space-between"
   },
-
   deleteBtn: {
-    background: "red",
+    background: "#000",
     color: "#fff",
     border: "none",
     padding: "5px 10px",
-    borderRadius: "5px",
-    cursor: "pointer"
+    borderRadius: "4px"
+  },
+  search: {
+    padding: "10px",
+    marginBottom: "20px",
+    borderRadius: "6px",
+    border: "1px solid #ccc"
   }
 };
 

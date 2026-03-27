@@ -1,3 +1,6 @@
+// Create authentication controllers for user registration and login.
+// Validate input fields and check if user already exists during registration.
+// Hash passwords using bcrypt before saving to database.
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
@@ -49,7 +52,9 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
+// Verify user credentials during login by comparing hashed passwords.
+// Generate JWT token for authenticated users and return user details in response.
+// Handle errors and send appropriate status messages.
     // Validation
     if (!email || !password) {
       return res.status(400).json({ msg: "Email and password are required" });

@@ -1,3 +1,7 @@
+// Create the main App component with routing using React Router.
+// Include a Navbar that is visible on all pages.
+// Define routes for home, login, register, cars, booking, dashboard, and admin pages.
+// Use clean structure to manage navigation between pages.
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
